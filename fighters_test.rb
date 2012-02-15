@@ -37,7 +37,9 @@ describe "A gunfight should" do
 
     it "determine if a given group of cowboys is self-defending" do
         @gunfight.self_defended?([:a,:e]).should be_true
+        
         @gunfight.self_defended?([:d,:e]).should be_false
+        @gunfight.self_defended?([:a,:e,:b]).should be_false
     end
 
 
