@@ -1,8 +1,6 @@
-require 'ap'
-
+# require 'ap'
 class Fighters
-  attr_reader :cowboys
-  attr_reader :attacks
+  attr_reader :cowboys, :attacks, :alive, :dead
 
   def initialize(cowboys, attacks)
     @cowboys = cowboys
@@ -14,40 +12,62 @@ class Fighters
     "Cowboys: #{@cowboys} | Attacks: #{@attacks}"
   end
 
-  def conflict_free?(group)
- 	  # Get the list of cowboys attacked by this group
-    targets = @attacks.values_at(*group)
-    # Make it pretty
-    targets.flatten!.uniq!
-
+  def conflict_free?( group )
+    targets = @attacks.values_at( *group ).flatten.uniq
     (targets & group).empty? ? true : false
   end
 
-  # true if a member of group is attacking any of the cowboys attacking cowboy
-  def defended?(cowboy, group)
-  	# find the group's targets (1) - 
-   	# find the attackers of the cowboy (2)
-   	# return true if the intersection of 1 and 2 is not empty
-
-   	# from the attacks hash, we need each key whose value contains the cowboy
-
-   	cowboy_attacks = attacks.select{ |attacker,targets| targets.include? cowboy}
-   	cowboy_attackers = cowboy_attacks.keys
-   	group_targets = @attacks.values_at(*group).flatten.uniq.compact
-
-   	(cowboy_attackers & group_targets).empty? ? false : true
-
+  def defended?( cowboy, group )
+    cowboy_attackers = @attacks.select{ |attacker,targets| targets.include? cowboy }.keys
+   	group_targets = @attacks.values_at( *group ).flatten.uniq.compact
+   	( cowboy_attackers & group_targets ).empty? ? false : true
   end
-
-  # A group is self defended if it is conflict free and if every cowboy
-  # in the group is defended by the group
-  def self_defended?(group)
-   	return false if not conflict_free? group
-
+  
+  def self_defended?( group )
+    sd = conflict_free?( group )
    	group.each do |cowboy|
-   		return false if not defended?(cowboy,group)  		    		
-   	end
-    return true
+      sd = sd && (defended?( cowboy,group ) ) 
+    end
+    return sd   	
   end
+
+  def unconditionally_alive
+    return compute_attacks( :alive )
+  end
+
+  def unconditionally_dead
+    return compute_attacks( :dead )
+
+  end
+
+    # to begin with, alive cowboys are those that have nobody aiming at them
+    # 
+    # Repeat the following steps until all cowboys are either dead or alive
+    #   remove all attacks where the atacker is unconditionally alive
+    #   check again for all cowboys that have nobody aiming at them
+  def compute_attacks( state )
+    cowboys = @cowboys
+    attacks = @attacks
+    unconditionally_alive = []
+    unconditionally_dead = []
+    
+    until ( (cowboys - (unconditionally_alive + unconditionally_dead) ).empty? )   
+      unconditionally_alive = cowboys - attacks.values.flatten.uniq
+      killing_attacks = attacks.select { |attacker,targets| unconditionally_alive.include?( attacker ) }
+      unconditionally_dead.concat( killing_attacks.values.flatten.uniq )
+      attacks.delete_if{ |attacker,target| unconditionally_dead.include?( attacker ) }
+    end
+
+    if state == :alive
+      return unconditionally_alive
+    elsif state == :dead
+      return unconditionally_dead
+    else 
+      raise(ArgumentError, 'Must be :alive or :dead')
+    end
+  end
+
+
+
 
 end
