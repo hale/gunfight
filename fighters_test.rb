@@ -1,94 +1,108 @@
 require './fighters.rb'
 require 'rspec'
 
-describe "A gunfight should" do    
+describe "A gunfight" do    
 
-    before(:all) do
-        @cowboys = [:a,:b,:c,:d,:e]
-        @attacks = [[:a,:d],[:b,:a],[:b,:c],[:b,:d],[:d,:b],[:e,:b]]
-        @attacks_hash = {
-            :a => [:d],
-            :b => [:a,:c,:d],
-            :d => [:b],
-            :e => [:b]
-        }
-        @gunfight= Fighters.new @cowboys,@attacks
+  before(:all) do
+    @cowboys = [:a,:b,:c,:d,:e,:f,:g,:h]
+    @attacks = [ [:a,:d],[:b,:a],[:b,:c],[:b,:d],[:d,:b],[:e,:b],[:g,:h],[:h,:g] ]
+    @attacks_hash = {
+      :a => [:d],
+      :b => [:a,:c,:d],
+      :d => [:b],
+      :e => [:b],
+      :g => [:h],
+      :h => [:g]
+    }
+    @gunfight= Fighters.new @cowboys,@attacks
+  end
 
-    end
-
-    it "have a populated list of cowboys" do
-        @gunfight.cowboys.should == @cowboys
-    end
-
-    it "create a hash listing attacks" do
-        @gunfight.attacks.should == @attacks_hash
-    end
-
-    # A group of cowboys is conflict-free if 
-    # none of the cowboys are attacking each other.
-    it "determine if a given set of cowboys is conflict free" do
-        @gunfight.conflict_free?([:c,:e]).should be_true
-        @gunfight.conflict_free?([:c,:d]).should be_true
-        @gunfight.conflict_free?([:b]).should be_true
-        @gunfight.conflict_free?([:e]).should be_true
-
-        @gunfight.conflict_free?([:b,:c]).should be_false
-        @gunfight.conflict_free?([:a,:b,:c,:d,:e]).should be_false
-        @gunfight.conflict_free?([:b,:d]).should be_false
-    end
-
-    # true if a member of group is attacking any of the cowboys attacking cowboy
-    #   find the group's targets (1)
-    #   find the attackers of the cowboy (2)
-    #   return true if the intersection of 1 and 2 is not empty
-    it "determine if a cowboy is defended by a given group" do
-        @gunfight.defended?(:b,[:a,:c]).should be_true        
-        @gunfight.defended?(:d,[:b,:c]).should be_true
-        @gunfight.defended?(:b,[:b]).should be_true
-        @gunfight.defended?(:c,[:e,:c]).should be_true
-        @gunfight.defended?(:b,[:b,:d]).should be_true
-
-        @gunfight.defended?(:e,[:a,:c]).should be_false
-        @gunfight.defended?(:e,[:a,:b,:d]).should be_false
-        @gunfight.defended?(:e,[:e]).should be_false
-
-    end
-
-    # A group is self defended if it is conflict free and if every cowboy
-    # in the group is defended by the group
-    it "determine if a given group of cowboys is self-defending" do
-        @gunfight.self_defended?([:b]).should be_true
-                
-        @gunfight.self_defended?([:a,:e]).should be_false
-        @gunfight.self_defended?([:d,:e]).should be_false
-        @gunfight.self_defended?([:a,:e,:b]).should be_false
-    end
-
-=begin
-
-Create methods called **unconditionally\_alive** and
-**unconditionally\_dead** which compute (and return as an array) those
-cowboys which are definitely alive and dead.
-
-#### **Hint:**
-
-To compute these, start with the cowboys which have no one aiming at
-them; these are unconditionally alive. Those cowboys being aimed at by
-these unconditionally alive cowboys are unconditionally dead, and those
-aimed at only by unconditionally dead cowboys are unconditionally alive
-and so on.
-
-=end
+  describe "gunfight initialization" do
     
-    it "compute those cowboys which are unconditionally alive" do
-        @gunfight.unconditionally_alive.should =~ [:e,:a,:c]
+    it "should have a populated list of cowboys" do
+      @gunfight.cowboys.should == @cowboys
     end
 
-    it "compute those cowboys which are unconditionally dead" do
+    it "should create a hash listing attacks" do
+      @gunfight.attacks.should == @attacks_hash
+    end
+  end
+
+  describe "conflict free" do
+
+    it "should be false if one cowboy attacks another" do
+      @gunfight.conflict_free?([ :a,:d ]).should be_false
+    end
+
+    it "should be true if the cowboys only attack outside the group" do
+      @gunfight.conflict_free?([ :a,:c,:e ]).should be_true
+    end
+
+    it "should be true if none of the cowboys are attacking" do
+      @gunfight.conflict_free?([ :f ]).should be_true
+    end
+  end
+
+  describe "cowboy defended by group" do
+
+    # trivially defended
+    it "should be true if the cowboy has no attackers" do
+      @gunfight.defended?( :e, [:d,:c,:a] ).should be_true
+      @gunfight.defended?( :e, [:e,:c,:a] ).should be_true
+    end
+
+    it "should be true if a member of the group
+                      is attacking any of the cowboy's attackers" do
+      @gunfight.defended?( :d, [:b,:c,:a] ).should be_true
+    end      
+
+    it "should be false if the group is empty" do
+      @gunfight.defended?( :a, [] ).should be_false
+    end
+
+    it "should be false if none of the group are attacking" do
+      @gunfight.defended?( :a, [:f,:c] ).should be_false
+    end
+
+    it "should be false if none of the group are attacking cowboy's attackers" do
+      @gunfight.defended?( :a, [:a,:c] ).should be_false
+    end
+  end
+
+  describe "self defended" do
+
+    it "should be false if the group is conflict free and if every member is
+                       *not* defended by the group" do
+      @gunfight.self_defended?([ :e,:a,:c ]).should be_false
+    end
+
+    it "should be false if the group is *not* conflict free and if every member 
+                       is *not* defended by the group" do
+      @gunfight.self_defended?([ :b,:d ]).should be_false
+    end
+        
+    it "should be false if the group is *not* conflict free and if every member
+                       is defended by the group" do
+      @gunfight.self_defended?([ :g,:h ]).should be_false
+    end
+
+    it "should be true if the group is conflict free and if every member is
+                      defended by the group" do
+      @gunfight.self_defended?([ :b ]).should be_true
+      @gunfight.self_defended?([ :e,:f ]).should be_true
+    end   
+  end
+
+  describe "dead or alive" do
+
+    xit "should compute those cowboys which are unconditionally alive" do
+      @gunfight.unconditionally_alive.should =~ [:e,:a,:c]
+    end
+
+    xit "should compute those cowboys which are unconditionally dead" do
         @gunfight.unconditionally_dead.should =~ [:b,:d]
     end
-
-
+  end
 
 end
 

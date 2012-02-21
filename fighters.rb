@@ -1,4 +1,4 @@
-# require 'ap'
+require 'ap'
 class Fighters
   attr_reader :cowboys, :attacks, :alive, :dead
 
@@ -18,13 +18,20 @@ class Fighters
   end
 
   def defended?( cowboy, group )
+
     cowboy_attackers = @attacks.select{ |attacker,targets| targets.include? cowboy }.keys
+    return true if cowboy_attackers.empty?
+
    	group_targets = @attacks.values_at( *group ).flatten.uniq.compact
-   	( cowboy_attackers & group_targets ).empty? ? false : true
+
+   	# ( cowboy_attackers & group_targets ).empty? ? false : true
+    return true unless( (cowboy_attackers & group_targets).empty? )
+    false
   end
   
   def self_defended?( group )
     sd = conflict_free?( group )
+
    	group.each do |cowboy|
       sd = sd && (defended?( cowboy,group ) ) 
     end

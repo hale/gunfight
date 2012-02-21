@@ -1,0 +1,12 @@
+
+A gunfight should
+[32m  have a populated list of cowboys[0m
+[32m  create a hash listing attacks[0m
+[32m  determine if a given set of cowboys is conflict free[0m
+[32m  determine if a cowboy is defended by a given group[0m
+[32m  determine if a given group of cowboys is self-defending[0m
+[32m  compute those cowboys which are unconditionally alive[0m
+[32m  compute those cowboys which are unconditionally dead[0m
+
+Finished in 0.00176 seconds
+[32m7 examples, 0 failures[0m
