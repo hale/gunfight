@@ -18,15 +18,12 @@ class Fighters
   end
 
   def defended?( cowboy, group )
-
     cowboy_attackers = @attacks.select{ |attacker,targets| targets.include? cowboy }.keys
-    return true if cowboy_attackers.empty?
+    # return true if cowboy_attackers.empty?
 
    	group_targets = @attacks.values_at( *group ).flatten.uniq.compact
 
-   	# ( cowboy_attackers & group_targets ).empty? ? false : true
-    return true unless( (cowboy_attackers & group_targets).empty? )
-    false
+    true unless( (cowboy_attackers & group_targets).empty? )
   end
   
   def self_defended?( group )
@@ -53,16 +50,48 @@ class Fighters
     #   remove all attacks where the atacker is unconditionally alive
     #   check again for all cowboys that have nobody aiming at them
   def compute_attacks( state )
+      puts state.to_s.upcase
+
+    
     cowboys = @cowboys
     attacks = @attacks
     unconditionally_alive = []
     unconditionally_dead = []
-    
-    until ( (cowboys - (unconditionally_alive + unconditionally_dead) ).empty? )   
-      unconditionally_alive = cowboys - attacks.values.flatten.uniq
+    killing_attacks = [nil]
+
+    # Until 
+    until ( killing_attacks.nil? || killing_attacks.empty?  ) 
+
+      #debug
+      print "Unconditionally alive:   "
+      puts unconditionally_alive.to_s
+      print "Unconditionally dead:    "
+      puts unconditionally_dead.to_s
+      print "Cowboys:                 "
+      puts cowboys.to_s
+      print "Attacks:                 "
+      puts attacks
+      
+
+      # Cowboys not being attacked are unconditionally alive
+      unconditionally_alive = (cowboys - attacks.values.flatten.uniq) - unconditionally_dead
+
+      # Select those attacks where the attacker is unconditionally alive
       killing_attacks = attacks.select { |attacker,targets| unconditionally_alive.include?( attacker ) }
-      unconditionally_dead.concat( killing_attacks.values.flatten.uniq )
-      attacks.delete_if{ |attacker,target| unconditionally_dead.include?( attacker ) }
+
+      print "killing attacks:         "
+      puts killing_attacks
+
+      # The targets of those atttacks are unconditionally dead
+      unconditionally_dead = unconditionally_dead + killing_attacks.values.flatten.uniq 
+
+      # Remove attacks where the target is already dead
+      attacks.each_pair{ |attacker,targets| targets.delete_if{ |target| unconditionally_dead.include?( target ) } }
+
+      # Remove the attacks where the attacker is dead
+      attacks.delete_if{ |attacker,targets| targets.empty? || unconditionally_dead.include?( attacker ) }
+
+      puts
     end
 
     if state == :alive

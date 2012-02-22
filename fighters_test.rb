@@ -95,11 +95,11 @@ describe "A gunfight" do
 
   describe "dead or alive" do
 
-    xit "should compute those cowboys which are unconditionally alive" do
-      @gunfight.unconditionally_alive.should =~ [:e,:a,:c]
+    it "should compute those cowboys which are unconditionally alive" do
+      @gunfight.unconditionally_alive.should =~ [:e,:a,:c,:f]
     end
 
-    xit "should compute those cowboys which are unconditionally dead" do
+    it "should compute those cowboys which are unconditionally dead" do
         @gunfight.unconditionally_dead.should =~ [:b,:d]
     end
   end
