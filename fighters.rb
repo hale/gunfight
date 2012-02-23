@@ -1,4 +1,3 @@
-require 'ap'
 class Fighters
   attr_reader :cowboys, :attacks, :alive, :dead
 
@@ -6,6 +5,9 @@ class Fighters
     @cowboys = cowboys
     # This line uses functional programming to group all attacks by attacker, and make it a hash 
     @attacks = Hash[ attacks.group_by(&:first).map{ |k,a| [k,a.map(&:last)] } ]
+
+    @cowboys.freeze
+    @attacks.freeze
   end
 
   def to_s
@@ -31,7 +33,7 @@ class Fighters
     # If the cowboy has no attackers, the cowboy is trivially defended
     return true if cowboy_attackers.empty?
 
-   	group_targets = @attacks.values_at( *group ).flatten.uniq.compact
+    group_targets = @attacks.values_at( *group ).flatten.uniq.compact
 
 =begin debug
          print "Cowboy's attackers:      "
@@ -49,10 +51,10 @@ class Fighters
   def self_defended?( group )
     sd = conflict_free?( group )
 
-   	group.each do |cowboy|
+    group.each do |cowboy|
       sd = sd && (defended?( cowboy,group ) ) 
     end
-    return sd   	
+    return sd     
   end
 
   def unconditionally_alive
@@ -70,16 +72,17 @@ class Fighters
     #   remove all attacks where the atacker is unconditionally alive
     #   check again for all cowboys that have nobody aiming at them
   def compute_attacks( state )
-      # puts state.to_s.upcase
-
-
     cowboys = @cowboys
-    attacks = @attacks
+    c_attacks = {}
+    @attacks.each do |k,v|
+      c_attacks[k] = v.clone
+    end
+
     unconditionally_alive = []
     unconditionally_dead = []
     killing_attacks = [nil]
 
-    # Until 
+    # Until there are no killing attacks
     until ( killing_attacks.nil? || killing_attacks.empty?  ) 
 =begin DEBUG
         print "Unconditionally alive:   "
@@ -89,29 +92,29 @@ class Fighters
         print "Cowboys:                 "
         puts cowboys.to_s
         print "Attacks:                 "
-        puts attacks
+        puts c_attacks
         print "killing attacks:         "
         puts killing_attacks
         puts
 =end
-      
 
       # Cowboys not being attacked are unconditionally alive
-      unconditionally_alive = (cowboys - attacks.values.flatten.uniq) - unconditionally_dead
+      unconditionally_alive = (cowboys - c_attacks.values.flatten.uniq) - unconditionally_dead
 
       # Select those attacks where the attacker is unconditionally alive
-      killing_attacks = attacks.select { |attacker,targets| unconditionally_alive.include?( attacker ) }
+      killing_attacks = c_attacks.select { |attacker,targets| unconditionally_alive.include?( attacker ) }
 
       # The targets of those atttacks are unconditionally dead
       unconditionally_dead = unconditionally_dead + killing_attacks.values.flatten.uniq 
 
       # Remove attacks where the target is already dead
-      attacks.each_pair{ |attacker,targets| targets.delete_if{ |target| unconditionally_dead.include?( target ) } }
+      c_attacks.each_pair{ |attacker,targets| targets.delete_if{ |target| unconditionally_dead.include?( target ) } }
 
       # Remove the attacks where the attacker is dead
-      attacks.delete_if{ |attacker,targets| targets.empty? || unconditionally_dead.include?( attacker ) }
+      c_attacks.delete_if{ |attacker,targets| targets.empty? || unconditionally_dead.include?( attacker ) }
 
     end
+
 
     if state == :alive
       return unconditionally_alive

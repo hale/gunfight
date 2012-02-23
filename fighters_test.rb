@@ -1,5 +1,6 @@
-require './Fighters.rb'
+require './fighters.rb'
 require 'rspec'
+require 'set'
 
 describe "A gunfight" do    
 
@@ -103,6 +104,21 @@ describe "A gunfight" do
     it "should compute those cowboys which are unconditionally dead" do
       @gunfight.unconditionally_dead.should =~ [:b,:d]
     end
+
+    # Nir's test
+    it "unconditionally alive and dead" do
+      d=Fighters.new([:a,:b,:c,:d],[[:b,:a],[:c,:a],[:d,:c]])
+      (d.unconditionally_alive.to_set).should == [:b,:d].to_set
+      # d=Fighters.new([:a,:b,:c,:d],[[:b,:a],[:c,:a],[:d,:c]])
+      (d.unconditionally_dead.to_set).should == [:a,:c].to_set
+    end 
+
+    # nir's test rewritten
+    it "unconditionally alive and dead" do
+      d=Fighters.new([:a,:b,:c,:d],[[:b,:a],[:c,:a],[:d,:c]])
+      d.unconditionally_alive.should =~ [:b,:d]
+      d.unconditionally_dead.should =~ [:a,:c]
+  end 
   end
 
 end
