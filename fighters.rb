@@ -17,13 +17,33 @@ class Fighters
     (targets & group).empty? ? true : false
   end
 
-  def defended?( cowboy, group )
+  # C is defended by X if any cowboy attacking C is attacked by a member of X
+  # Given: A list of cowboys attacking C
+  #        A list of the cowboys every cowboy in X is attacking
+  # C is defended if any of the cowboys in the second list are also in the first
+  # 
+  def defended?( cowboy, group )  
+    #puts "defended?( #{cowboy.to_s} , #{group.to_s} )".upcase
+    cowboy_attackers = []
+
     cowboy_attackers = @attacks.select{ |attacker,targets| targets.include? cowboy }.keys
-    # return true if cowboy_attackers.empty?
+
+    # If the cowboy has no attackers, the cowboy is trivially defended
+    return true if cowboy_attackers.empty?
 
    	group_targets = @attacks.values_at( *group ).flatten.uniq.compact
 
-    true unless( (cowboy_attackers & group_targets).empty? )
+=begin debug
+         print "Cowboy's attackers:      "
+         puts cowboy_attackers.to_s
+         print "Group's targets:         "
+         puts group_targets.to_s
+         print "Intersection of the two: "
+         puts (cowboy_attackers & group_targets).to_s
+=end
+
+    (cowboy_attackers & group_targets).empty? ? false : true
+
   end
   
   def self_defended?( group )
@@ -50,9 +70,9 @@ class Fighters
     #   remove all attacks where the atacker is unconditionally alive
     #   check again for all cowboys that have nobody aiming at them
   def compute_attacks( state )
-      puts state.to_s.upcase
+      # puts state.to_s.upcase
 
-    
+
     cowboys = @cowboys
     attacks = @attacks
     unconditionally_alive = []
@@ -61,16 +81,19 @@ class Fighters
 
     # Until 
     until ( killing_attacks.nil? || killing_attacks.empty?  ) 
-
-      #debug
-      print "Unconditionally alive:   "
-      puts unconditionally_alive.to_s
-      print "Unconditionally dead:    "
-      puts unconditionally_dead.to_s
-      print "Cowboys:                 "
-      puts cowboys.to_s
-      print "Attacks:                 "
-      puts attacks
+=begin DEBUG
+        print "Unconditionally alive:   "
+        puts unconditionally_alive.to_s
+        print "Unconditionally dead:    "
+        puts unconditionally_dead.to_s
+        print "Cowboys:                 "
+        puts cowboys.to_s
+        print "Attacks:                 "
+        puts attacks
+        print "killing attacks:         "
+        puts killing_attacks
+        puts
+=end
       
 
       # Cowboys not being attacked are unconditionally alive
@@ -78,9 +101,6 @@ class Fighters
 
       # Select those attacks where the attacker is unconditionally alive
       killing_attacks = attacks.select { |attacker,targets| unconditionally_alive.include?( attacker ) }
-
-      print "killing attacks:         "
-      puts killing_attacks
 
       # The targets of those atttacks are unconditionally dead
       unconditionally_dead = unconditionally_dead + killing_attacks.values.flatten.uniq 
@@ -91,7 +111,6 @@ class Fighters
       # Remove the attacks where the attacker is dead
       attacks.delete_if{ |attacker,targets| targets.empty? || unconditionally_dead.include?( attacker ) }
 
-      puts
     end
 
     if state == :alive

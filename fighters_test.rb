@@ -1,9 +1,9 @@
-require './fighters.rb'
+require './Fighters.rb'
 require 'rspec'
 
 describe "A gunfight" do    
 
-  before(:all) do
+  before(:each) do
     @cowboys = [:a,:b,:c,:d,:e,:f,:g,:h]
     @attacks = [ [:a,:d],[:b,:a],[:b,:c],[:b,:d],[:d,:b],[:e,:b],[:g,:h],[:h,:g] ]
     @attacks_hash = {
@@ -73,7 +73,7 @@ describe "A gunfight" do
 
     it "should be false if the group is conflict free and if every member is
                        *not* defended by the group" do
-      @gunfight.self_defended?([ :e,:a,:c ]).should be_false
+      @gunfight.self_defended?([ :b,:g,:h ]).should be_false
     end
 
     it "should be false if the group is *not* conflict free and if every member 
@@ -90,6 +90,7 @@ describe "A gunfight" do
                       defended by the group" do
       @gunfight.self_defended?([ :b ]).should be_true
       @gunfight.self_defended?([ :e,:f ]).should be_true
+      @gunfight.self_defended?([ :e,:a,:c ]).should be_true
     end   
   end
 
@@ -100,7 +101,7 @@ describe "A gunfight" do
     end
 
     it "should compute those cowboys which are unconditionally dead" do
-        @gunfight.unconditionally_dead.should =~ [:b,:d]
+      @gunfight.unconditionally_dead.should =~ [:b,:d]
     end
   end
 
